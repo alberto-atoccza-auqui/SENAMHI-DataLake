@@ -1,0 +1,1 @@
+# Core package init for senamhi_datalake.

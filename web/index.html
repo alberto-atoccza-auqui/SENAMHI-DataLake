@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SENAMHI DataLake</title>
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">
+                <span class="logo-icon">🌦️</span>
+                <span class="logo-text">SENAMHI<span class="logo-accent">DataLake</span></span>
+            </div>
+        </div>
+        <nav class="sidebar-nav">
+            <button class="nav-btn active" data-view="dashboard">
+                <span class="nav-icon">📊</span>
+                <span>Dashboard</span>
+            </button>
+            <button class="nav-btn" data-view="stations">
+                <span class="nav-icon">📍</span>
+                <span>Estaciones</span>
+            </button>
+            <button class="nav-btn" data-view="extraction">
+                <span class="nav-icon">⚡</span>
+                <span>Extracción</span>
+            </button>
+            <button class="nav-btn" data-view="data-viewer">
+                <span class="nav-icon">📈</span>
+                <span>Visualización</span>
+            </button>
+            <button class="nav-btn" data-view="files">
+                <span class="nav-icon">📁</span>
+                <span>Archivos</span>
+            </button>
+            <button class="nav-btn" data-view="map">
+                <span class="nav-icon">🗺️</span>
+                <span>Mapa</span>
+            </button>
+        </nav>
+        <div class="sidebar-footer">
+            <button class="theme-toggle" id="themeToggle" title="Cambiar tema">
+                <span class="theme-icon">🌙</span>
+            </button>
+            <div class="api-status" id="apiStatus">
+                <span class="status-dot"></span>
+                <span>API</span>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Top Bar -->
+        <header class="topbar">
+            <h1 id="viewTitle">Dashboard</h1>
+            <div class="topbar-actions">
+                <span class="system-badge" id="systemBadge">v2.0.0</span>
+            </div>
+        </header>
+
+        <!-- View: Dashboard -->
+        <section class="view active" id="view-dashboard">
+            <div class="kpi-grid">
+                <div class="kpi-card">
+                    <div class="kpi-icon">📍</div>
+                    <div class="kpi-info">
+                        <div class="kpi-value" id="kpiStations">--</div>
+                        <div class="kpi-label">Estaciones</div>
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-icon">📊</div>
+                    <div class="kpi-info">
+                        <div class="kpi-value" id="kpiExtractions">--</div>
+                        <div class="kpi-label">Extracciones Totales</div>
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-icon">✅</div>
+                    <div class="kpi-info">
+                        <div class="kpi-value" id="kpiCompleted">--</div>
+                        <div class="kpi-label">Completadas</div>
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-icon">💾</div>
+                    <div class="kpi-info">
+                        <div class="kpi-value" id="kpiDbSize">--</div>
+                        <div class="kpi-label">Tamaño BD</div>
+                    </div>
+                </div>
+            </div>
+            <div class="dashboard-grid">
+                <div class="card">
+                    <div class="card-header">
+                        📋 Extracciones Recientes
+                        <button class="btn btn-sm btn-outline" id="clearRecentExtractions">Limpiar</button>
+                    </div>
+                    <div class="card-body" id="recentExtractions">
+                        <p class="text-muted">Cargando...</p>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header">📊 Distribución de Estaciones</div>
+                    <div class="card-body">
+                        <canvas id="stationChart" height="200"></canvas>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        🏷️ Estado de Extracciones
+                        <button class="btn btn-sm btn-outline" id="clearExtractionStatus">Limpiar</button>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="extractionStatusChart" height="200"></canvas>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header">📁 Archivos Disponibles</div>
+                    <div class="card-body" id="filesSummary">
+                        <p class="text-muted">Cargando...</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- View: Stations -->
+        <section class="view" id="view-stations">
+            <div class="toolbar">
+                <div class="search-box">
+                    <input type="text" id="stationSearch" placeholder="🔍 Buscar estación por nombre..." class="input">
+                </div>
+                <select id="stationTypeFilter" class="select">
+                    <option value="">Todos los tipos</option>
+                    <option value="M">🌡️ Meteorológica</option>
+                    <option value="H">💧 Hidrológica</option>
+                </select>
+                <select id="stationStatusFilter" class="select">
+                    <option value="">Todos los estados</option>
+                    <option value="REAL">🟢 Tiempo Real</option>
+                    <option value="DIFERIDO">🟡 Diferido</option>
+                    <option value="AUTOMATICA">🔵 Automática</option>
+                </select>
+            </div>
+            <div class="card">
+                <div class="card-header">
+                    📍 Catálogo de Estaciones
+                    <span class="badge" id="stationCount">0</span>
+                </div>
+                <div class="card-body station-table-wrapper">
+                    <table class="data-table" id="stationTable">
+                        <thead>
+                            <tr>
+                                <th>Código</th>
+                                <th>Nombre</th>
+                                <th>Tipo</th>
+                                <th>Categoría</th>
+                                <th>Estado</th>
+                                <th>Coordenadas</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="stationTableBody">
+                            <tr><td colspan="7" class="text-center text-muted">Cargando estaciones...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- View: Extraction -->
+        <section class="view" id="view-extraction">
+            <div class="extraction-panel">
+                <div class="card">
+                    <div class="card-header">⚡ Nueva Extracción</div>
+                    <div class="card-body">
+                        <div class="form-row">
+                            <div class="form-group flex-1">
+                                <label>Estación</label>
+                                <select id="extractionStation" class="select">
+                                    <option value="">-- Seleccionar estación --</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Modo de Consulta</label>
+                                <select id="extractionMode" class="select">
+                                    <option value="month">📅 Mes específico</option>
+                                    <option value="year">📆 Año completo</option>
+                                    <option value="period">📚 Periodo (múltiples años)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-row" id="modeMonthParams">
+                            <div class="form-group">
+                                <label>Año</label>
+                                <input type="number" id="extYear" class="input" value="2024" min="2000" max="2050">
+                            </div>
+                            <div class="form-group">
+                                <label>Mes</label>
+                                <select id="extMonth" class="select">
+                                    <option value="1">Enero</option><option value="2">Febrero</option>
+                                    <option value="3">Marzo</option><option value="4">Abril</option>
+                                    <option value="5">Mayo</option><option value="6">Junio</option>
+                                    <option value="7">Julio</option><option value="8">Agosto</option>
+                                    <option value="9">Septiembre</option><option value="10">Octubre</option>
+                                    <option value="11">Noviembre</option><option value="12">Diciembre</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-row" id="modeYearParams" style="display:none">
+                            <div class="form-group">
+                                <label>Año</label>
+                                <input type="number" id="extYearY" class="input" value="2024" min="2000" max="2050">
+                            </div>
+                        </div>
+                        <div class="form-row" id="modePeriodParams" style="display:none">
+                            <div class="form-group">
+                                <label>Año Inicial</label>
+                                <input type="number" id="extStartYear" class="input" value="2020" min="2000" max="2050">
+                            </div>
+                            <div class="form-group">
+                                <label>Año Final</label>
+                                <input type="number" id="extEndYear" class="input" value="2025" min="2000" max="2050">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="extConsolidated" checked>
+                                    Archivo consolidado único
+                                </label>
+                            </div>
+                        </div>
+                        <button class="btn btn-primary btn-lg" id="startExtraction">
+                            🚀 Iniciar Extracción
+                        </button>
+                    </div>
+                </div>
+                <div class="card mt-2">
+                    <div class="card-header">
+                        📋 Historial de Extracciones
+                        <button class="btn btn-sm btn-outline" id="clearExtractionHistory">Limpiar historial</button>
+                    </div>
+                    <div class="card-body" id="extractionHistory">
+                        <p class="text-muted">Cargando...</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- View: Data Viewer -->
+        <section class="view" id="view-data-viewer">
+            <div class="toolbar">
+                <select id="dataViewerStation" class="select">
+                    <option value="">-- Seleccionar estación --</option>
+                </select>
+                <button class="btn btn-primary" id="loadDataPreview">📊 Ver Datos</button>
+            </div>
+            <div class="dashboard-grid">
+                <div class="card">
+                    <div class="card-header">📈 Serie Temporal</div>
+                    <div class="card-body">
+                        <canvas id="timeSeriesChart" height="300"></canvas>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header">📋 Datos</div>
+                    <div class="card-body data-preview-wrapper">
+                        <div id="dataPreviewInfo" class="text-muted mb-1">
+                            Selecciona una estación para ver sus datos.
+                        </div>
+                        <div class="table-scroll">
+                            <table class="data-table" id="dataPreviewTable">
+                                <thead id="dataPreviewHead"></thead>
+                                <tbody id="dataPreviewBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- View: Files -->
+        <section class="view" id="view-files">
+            <div class="card">
+                <div class="card-header">
+                    📁 Archivos CSV Generados
+                    <span class="badge" id="fileCount">0</span>
+                    <button class="btn btn-sm btn-outline" id="openDataFolder" title="Abrir carpeta en el explorador">📂 Abrir carpeta</button>
+                </div>
+                <div class="card-body">
+                    <div class="table-scroll">
+                        <table class="data-table" id="filesTable">
+                            <thead>
+                                <tr>
+                                    <th>Estación</th>
+                                    <th>Archivo</th>
+                                    <th>Tamaño</th>
+                                    <th>Filas</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="filesTableBody">
+                                <tr><td colspan="5" class="text-center text-muted">Cargando archivos...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- View: Map -->
+        <section class="view" id="view-map">
+            <div class="card">
+                <div class="card-header">🗺️ Mapa de Estaciones SENAMHI</div>
+                <div class="card-body p-0">
+                    <div id="stationMap" style="height: 500px; border-radius: 0 0 var(--radius) var(--radius);"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Toast Container -->
+        <div class="toast-container" id="toastContainer"></div>
+    </main>
+
+    <!-- Scripts -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>

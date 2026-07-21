@@ -1,0 +1,82 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "senamhi-datalake"
+version = "2.0.0"
+description = "SaaS platform for extraction, management and visualization of SENAMHI hydro-meteorological data"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.11"
+authors = [
+    { name = "SENAMHI DataLake Contributors" },
+]
+keywords = ["senamhi", "meteorology", "hydrology", "peru", "climate", "scraping", "fastapi"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering :: Atmospheric Science",
+    "Topic :: Scientific/Engineering :: Hydrology",
+]
+
+dependencies = [
+    "fastapi>=0.115,<1",
+    "uvicorn[standard]>=0.34,<1",
+    "sqlalchemy[asyncio]>=2.0,<3",
+    "aiosqlite>=0.20,<1",
+    "pydantic>=2.10,<3",
+    "pydantic-settings>=2.7,<3",
+    "python-jose[cryptography]>=3.3,<4",
+    "passlib[bcrypt]>=1.7,<2",
+    "python-multipart>=0.0.18,<1",
+    "beautifulsoup4>=4.12,<5",
+    "zendriver>=0.14,<1",
+]
+
+[project.scripts]
+senamhi-extraction-worker = "senamhi_datalake.cli:main"
+
+[project.optional-dependencies]
+scraper = [
+    "pandas>=2.2,<4",
+    "openpyxl>=3.1,<4",
+]
+dev = [
+    "pytest>=8,<9",
+    "pytest-asyncio>=0.24,<1",
+    "httpx>=0.28,<1",
+    "ruff>=0.9,<1",
+]
+docs = [
+    "mkdocs>=1.6,<2",
+    "mkdocs-material>=9.5,<10",
+]
+all = [
+    "senamhi-datalake[scraper,dev,docs]",
+]
+
+[project.urls]
+Homepage = "https://github.com/senamhi-datalake/senamhi-datalake"
+Documentation = "https://senamhi-datalake.readthedocs.io"
+Repository = "https://github.com/senamhi-datalake/senamhi-datalake"
+Issues = "https://github.com/senamhi-datalake/senamhi-datalake/issues"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/senamhi_datalake"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "UP", "B", "SIM"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
